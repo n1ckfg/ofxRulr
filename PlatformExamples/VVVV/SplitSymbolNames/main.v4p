@@ -1,6 +1,6 @@
 <!DOCTYPE PATCH  SYSTEM "http://vvvv.org/versions/vvvv50beta35.8.dtd" >
    <PATCH nodename="C:\dev\openFrameworks\addons\ofxRulr\PlatformExamples\VVVV\SplitSymbolNames\main.v4p" systemname="main" filename="E:\openFrameworks\addons\ofxRulr\PlatformExamples\VVVV\SplitSymbolNames\main.v4p" scrollx="0" scrolly="-360">
-   <BOUNDS type="Window" left="0" top="540" width="28980" height="16380">
+   <BOUNDS type="Window" left="14730" top="26955" width="28980" height="16380">
    </BOUNDS>
    <NODE systemname="IOBox (String)" nodename="IOBox (String)" componentmode="InABox" id="0">
    <BOUNDS type="Node" left="666" top="573" width="100" height="100">
@@ -297,7 +297,7 @@
    </BOUNDS>
    <BOUNDS type="Box" left="4128" top="3960" width="2400" height="1800">
    </BOUNDS>
-   <BOUNDS type="Window" left="17130" top="5490" width="28800" height="5085">
+   <BOUNDS type="Window" left="15780" top="30645" width="28800" height="5085">
    </BOUNDS>
    </NODE>
    <NODE systemname="Count (String)" nodename="Count (String)" componentmode="Hidden" id="33">
