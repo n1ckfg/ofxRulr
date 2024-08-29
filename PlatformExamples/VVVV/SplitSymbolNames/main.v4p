@@ -1,4 +1,4 @@
-<!DOCTYPE PATCH  SYSTEM "http://vvvv.org/versions/vvvv50beta35.8.dtd" >
+<!DOCTYPE PATCH  SYSTEM "http://vvvv.org/versions/vvvv50beta42.dtd" >
    <PATCH nodename="C:\dev\openFrameworks\addons\ofxRulr\PlatformExamples\VVVV\SplitSymbolNames\main.v4p" systemname="main" filename="E:\openFrameworks\addons\ofxRulr\PlatformExamples\VVVV\SplitSymbolNames\main.v4p" scrollx="0" scrolly="-360">
    <BOUNDS type="Window" left="0" top="0" width="28980" height="16380">
    </BOUNDS>
@@ -12,7 +12,7 @@
    <PIN pinname="Output String" visible="1">
    </PIN>
    </NODE>
-   <PACK Name="addonpack" Version="35.0.0">
+   <PACK Name="addonpack" Version="42.0.0">
    </PACK>
    <NODE nodename="IOBox (String)" componentmode="InABox" id="3" systemname="IOBox (String)">
    <BOUNDS type="Box" left="708" top="9924" width="11352" height="3240">
