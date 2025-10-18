@@ -129,6 +129,7 @@ EXPORTS
 	?ofDrawLine@@YAXAEBU?$vec@$02M$0A@@glm@@0@Z
 	?ofDrawLine@@YAXMMMM@Z
 	?ofDrawLine@@YAXMMMMMM@Z
+	?ofDrawPlane@@YAXMM@Z
 	?ofDrawRectangle@@YAXAEBVofRectangle@@@Z
 	?ofDrawRectangle@@YAXMMMM@Z
 	?ofDrawRectRounded@@YAXAEBVofRectangle@@MMMM@Z
@@ -348,6 +349,7 @@ EXPORTS
 	?draw@of3dPrimitive@@UEBAXXZ
 	?drawWireframe@of3dPrimitive@@QEBAXXZ
 	?getMesh@of3dPrimitive@@QEAAAEAV?$ofMesh_@U?$vec@$02M$0A@@glm@@U12@V?$ofColor_@M@@U?$vec@$01M$0A@@2@@@XZ
+	?mapTexCoords@of3dPrimitive@@QEAAXMMMM@Z
 	?mapTexCoordsFromTexture@of3dPrimitive@@QEAAXAEBVofTexture@@@Z
 	?setUseVbo@of3dPrimitive@@QEAAX_N@Z
 	?escape@ofAbstractParameter@@MEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@AEBV23@@Z
@@ -817,6 +819,7 @@ EXPORTS
 	?clear@ofxOscMessage@@QEAAXXZ
 	?getAddress@ofxOscMessage@@QEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@XZ
 	?getArgAsFloat@ofxOscMessage@@QEBAM_K@Z
+	?getArgAsInt@ofxOscMessage@@QEBAH_K@Z
 	?getArgAsInt64@ofxOscMessage@@QEBA_J_K@Z
 	?getArgAsString@ofxOscMessage@@QEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@_K@Z
 	?getArgType@ofxOscMessage@@QEBA?AW4_ofxOscArgType@@_K@Z
@@ -1097,6 +1100,9 @@ EXPORTS
 	?glPushAttrib@Graphics@Utils@ofxRulr@@SAXI@Z
 	?popPointSize@Graphics@Utils@ofxRulr@@SAXXZ
 	?pushPointSize@Graphics@Utils@ofxRulr@@SAXM_N@Z
+	?isFrameNew@IsFrameNew@Utils@ofxRulr@@QEBA_NXZ
+	?markFrameNew@IsFrameNew@Utils@ofxRulr@@QEAAXXZ
+	?update@IsFrameNew@Utils@ofxRulr@@QEAAXXZ
 	?evaluate@PolyFit@Utils@ofxRulr@@YAMAEBUModel@123@M@Z
 	?fit@PolyFit@Utils@ofxRulr@@YA?AUModel@123@AEBV?$vector@U?$vec@$01M$0A@@glm@@V?$allocator@U?$vec@$01M$0A@@glm@@@std@@@std@@H@Z
 	?end@ScopedProcess@Utils@ofxRulr@@QEAAX_N@Z
@@ -1135,4 +1141,3 @@ EXPORTS
 	?fend@Delaunay@tpp@@QEAA?AVfIterator@12@XZ
 	?Org@Delaunay@tpp@@QEAAHAEBVfIterator@12@@Z
 	?Triangulate@Delaunay@tpp@@AEAAXAEAV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@@Z
-	?getArgAsInt@ofxOscMessage@@QEBAH_K@Z
