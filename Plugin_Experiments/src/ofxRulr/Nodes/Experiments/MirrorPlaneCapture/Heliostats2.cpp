@@ -86,7 +86,10 @@ namespace ofxRulr {
 						this->dispatcherThread.actionsLock.unlock();
 
 						if (!havePushStale) {
-							this->pushStale(false, false);
+							try {
+								this->pushStale(false, false);
+							}
+							RULR_CATCH_ALL_TO_ERROR;
 						}
 					}
 
@@ -260,6 +263,7 @@ namespace ofxRulr {
 				}
 
 				//----------
+				// https://paper.dropbox.com/doc/KC81-Heliostat-CSV-format--CECtlPII1sunrWKrts2rUb6~Ag-a7eEMn7EiS2rfMG324gBY
 				void Heliostats2::importCSV() {
 					auto result = ofSystemLoadDialog("Load CSV file", false);
 					if (!result.bSuccess) {
@@ -270,6 +274,8 @@ namespace ofxRulr {
 
 					// Ignore first line (headers)
 					for (size_t i = 1; i < fileLines.size(); i++) {
+						bool rightTangent = i % 2 == 1;
+
 						auto cols = ofSplitString(fileLines[i], ",");
 						if (cols.size() < 7) {
 							continue;
@@ -309,6 +315,12 @@ namespace ofxRulr {
 
 						heliostat->parameters.servo1.ID.set(ofToInt(cols[5]));
 						heliostat->parameters.servo2.ID.set(ofToInt(cols[6]));
+
+						if (cols.size() >= 12) {
+							auto axis2AngleOffset = ofToFloat(cols[11]);
+							heliostat->parameters.servo2.angleOffset.set(axis2AngleOffset);
+						}
+						heliostat->parameters.rightTangent.set(rightTangent);
 
 						if (isNew) {
 							this->add(heliostat);
@@ -744,16 +756,13 @@ namespace ofxRulr {
 
 					// Mirror face
 					if (isBeingInspected) {
-						glm::vec3 mirrorCenter, mirrorNormal;
-						Solvers::HeliostatActionModel::getMirrorCenterAndNormal({
+						auto mirrorPlane = Solvers::HeliostatActionModel::getMirrorPlane({
 							this->parameters.servo1.angle.get()
 							, this->parameters.servo2.angle.get()
 							}
-							, this->getHeliostatActionModelParameters()
-							, mirrorCenter
-							, mirrorNormal);
+							, this->getHeliostatActionModelParameters());
 
-						ofDrawArrow(mirrorCenter, mirrorCenter + 0.2f * mirrorNormal, 0.01f);
+						ofDrawArrow(mirrorPlane.center, mirrorPlane.center + 0.2f * mirrorPlane.normal, 0.01f);
 
 						ofPushStyle();
 						{
@@ -766,17 +775,14 @@ namespace ofxRulr {
 
 				//----------
 				void Heliostats2::Heliostat::drawMirrorFace(float mirrorScale) {
-					glm::vec3 mirrorCenter, mirrorNormal;
-					Solvers::HeliostatActionModel::getMirrorCenterAndNormal({
+					auto mirrorPlane = Solvers::HeliostatActionModel::getMirrorPlane({
 						this->parameters.servo1.angle.get()
 						, this->parameters.servo2.angle.get()
 						}
-						, this->getHeliostatActionModelParameters()
-						, mirrorCenter
-						, mirrorNormal);
+						, this->getHeliostatActionModelParameters());
 
-					Solvers::HeliostatActionModel::drawMirror(mirrorCenter
-						, mirrorNormal
+					Solvers::HeliostatActionModel::drawMirror(mirrorPlane.center
+						, mirrorPlane.normal
 						, this->parameters.diameter.get() * mirrorScale);
 				}
 
@@ -836,6 +842,12 @@ namespace ofxRulr {
 						}
 						RULR_CATCH_ALL_TO_ALERT;
 						});
+					inspector->addButton("Take angles into offset", [this]() {
+						try {
+							this->takeAnglesIntoOffset();
+						}
+						RULR_CATCH_ALL_TO_ALERT;
+						});
 				}
 
 				//----------
@@ -861,6 +873,8 @@ namespace ofxRulr {
 				//----------
 				void Heliostats2::Heliostat::setHeliostatActionModelParameters(const Solvers::HeliostatActionModel::Parameters<float> & parameters) {
 					this->parameters.hamParameters.position.set(parameters.position);
+
+					this->parameters.hamParameters.rotationY.set(parameters.rotationY);
 
 					this->parameters.hamParameters.axis1.polynomial.set(parameters.axis1.polynomial);
 					this->parameters.hamParameters.axis1.rotationAxis.set(parameters.axis1.rotationAxis);
@@ -895,6 +909,22 @@ namespace ofxRulr {
 				}
 
 				//----------
+				void
+					Heliostats2::Heliostat::takeAnglesIntoOffset()
+				{
+					auto applyOffset = [] (ServoParameters & servo){
+						auto angle = servo.angle.get();
+						auto priorOffset = servo.angleOffset.get();
+						auto offset = angle + priorOffset;
+
+						servo.angleOffset.set(offset);
+						servo.angle.set(0.0f);
+					};
+					applyOffset(this->parameters.servo1);
+					applyOffset(this->parameters.servo2);
+				}
+
+				//----------
 				void Heliostats2::Heliostat::navigateToNormal(const glm::vec3& normal, const ofxCeres::SolverSettings& solverSettings, bool throwIfOutsideRange) {
 					Solvers::HeliostatActionModel::AxisAngles<float> priorAngles{
 						this->parameters.servo1.angle
@@ -911,8 +941,13 @@ namespace ofxRulr {
 						}, priorAngles
 						, throwIfOutsideRange);
 
-					this->parameters.servo1.angle = result.solution.axisAngles.axis1;
-					this->parameters.servo2.angle = result.solution.axisAngles.axis2;
+					if (!result.isError) {
+						this->parameters.servo1.angle = result.solution.axisAngles.axis1;
+						this->parameters.servo2.angle = result.solution.axisAngles.axis2;
+					}
+					else {
+						ofLogError("H : " + this->parameters.name.get() + " navigate") << result.errorMessage;
+					}
 
 					this->update();
 				}
@@ -935,8 +970,13 @@ namespace ofxRulr {
 						}, priorAngles
 						, throwIfOutsideRange);
 
-					this->parameters.servo1.angle = result.solution.axisAngles.axis1;
-					this->parameters.servo2.angle = result.solution.axisAngles.axis2;
+					if (!result.isError) {
+						this->parameters.servo1.angle = result.solution.axisAngles.axis1;
+						this->parameters.servo2.angle = result.solution.axisAngles.axis2;
+					}
+					else {
+						ofLogError("H : " + this->parameters.name.get() + " navigate") << result.errorMessage;
+					}
 
 					this->update();
 				}
@@ -962,8 +1002,13 @@ namespace ofxRulr {
 						}, priorAngles
 						, throwIfOutsideRange);
 
-					this->parameters.servo1.angle = result.solution.axisAngles.axis1;
-					this->parameters.servo2.angle = result.solution.axisAngles.axis2;
+					if (!result.isError) {
+						this->parameters.servo1.angle = result.solution.axisAngles.axis1;
+						this->parameters.servo2.angle = result.solution.axisAngles.axis2;
+					}
+					else {
+						ofLogError("H : " + this->parameters.name.get() + " navigate") << result.errorMessage;
+					}
 
 					this->update();
 				}
@@ -1016,15 +1061,18 @@ namespace ofxRulr {
 					this->setName(name);
 					this->add(this->ID);
 					this->add(this->angle);
+					this->add(this->angleOffset);
 					this->add(this->goalPosition);
 				}
 
 				//----------
 				void Heliostats2::ServoParameters::update() {
 					this->clampAngleToLimits();
-					if (this->cachedAngle != this->angle.get()) {
+					if (this->cachedAngle != this->angle.get()
+						|| this->cachedAngleOffset != this->angleOffset.get()) {
 						this->calculateGoalPosition();
 						this->cachedAngle = this->angle.get();
+						this->cachedAngleOffset = this->angleOffset.get();
 					}
 					if (this->cachedGoalPosition != this->goalPosition.get()) {
 						this->goalPositionNeedsPush = true;
@@ -1051,8 +1099,9 @@ namespace ofxRulr {
 				//----------
 				int Heliostats2::ServoParameters::angleToGoalPosition(float angle) {
 					const auto& polynomial = this->axisParameters.polynomial.get();
-
+					const auto& angleOffset = this->angleOffset.get();
 					auto result = Solvers::HeliostatActionModel::SolvePosition::solvePosition(angle
+						, angleOffset
 						, polynomial
 						, this->goalPosition.get());
 					if (!result.isConverged()) {
@@ -1072,20 +1121,23 @@ namespace ofxRulr {
 				//----------
 				void Heliostats2::ServoParameters::setPresentPosition(const Dispatcher::RegisterValue& registerValue) {
 					auto result = Solvers::HeliostatActionModel::positionToAngle<float>((float) registerValue
-						, this->axisParameters.polynomial.get());
+						, this->axisParameters.polynomial.get()
+						, this->angleOffset.get());
 				}
 
 				//----------
 				void Heliostats2::ServoParameters::setMinPosition(const Dispatcher::RegisterValue& registerValue) {
 					auto result = Solvers::HeliostatActionModel::positionToAngle<float>((float)registerValue
-						, this->axisParameters.polynomial.get());
+						, this->axisParameters.polynomial.get()
+						, this->angleOffset.get());
 					this->angle.setMin(result);
 				}
 
 				//----------
 				void Heliostats2::ServoParameters::setMaxPosition(const Dispatcher::RegisterValue& registerValue) {
 					auto result = Solvers::HeliostatActionModel::positionToAngle<float>((float)registerValue
-						, this->axisParameters.polynomial.get());
+						, this->axisParameters.polynomial.get()
+						, this->angleOffset.get());
 					this->angle.setMax(result);
 				}
 

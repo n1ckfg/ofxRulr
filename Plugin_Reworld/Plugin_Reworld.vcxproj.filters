@@ -1,0 +1,177 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="src">
+      <UniqueIdentifier>{53695f24-0430-4196-b53c-3cce472d160b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\ofxRulr">
+      <UniqueIdentifier>{f8a6306b-29fd-4ca4-936e-6f0ee4df836c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\ofxRulr\Nodes">
+      <UniqueIdentifier>{80eb14e2-a317-472d-baf0-7515e30797fe}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\ofxRulr\Nodes\Reworld">
+      <UniqueIdentifier>{b29a37d6-862b-42fb-b900-90be0773b1b9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="addons">
+      <UniqueIdentifier>{6cdec120-e322-4625-900d-80e633386938}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="addons\ofxHomography">
+      <UniqueIdentifier>{27844f2d-b474-4ff0-8acb-950cee08ea7d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="addons\ofxHomography\src">
+      <UniqueIdentifier>{34835e21-96b3-4a55-ac91-9e966405d465}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\ofxRulr\Data">
+      <UniqueIdentifier>{7d15e71b-6f31-42b0-97a4-7d5a57c07d29}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\ofxRulr\Data\Reworld">
+      <UniqueIdentifier>{ea6c9b75-8a19-4419-8833-85889a7a9d21}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\ofxRulr\Models">
+      <UniqueIdentifier>{61a254f1-ff90-4a13-b496-d56e2d149e8e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\ofxRulr\Models\Reworld">
+      <UniqueIdentifier>{72297e47-58a8-4949-ba5a-44e6b8b71837}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\ofxRulr\Solvers">
+      <UniqueIdentifier>{683b0146-0762-4caa-8095-6577f3ed35e4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\ofxRulr\Solvers\Reworld">
+      <UniqueIdentifier>{0890f490-c6ec-45b7-b430-eb479b650c08}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\ofxRulr\Solvers\Reworld\Navigate">
+      <UniqueIdentifier>{ee1b426a-056e-46f9-b0b8-145cbf372710}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\ofxRulr\Solvers\Reworld\Calibrate">
+      <UniqueIdentifier>{9f9adf5e-51a8-44ca-8a46-fa879fa7779d}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\plugin.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\pch_Plugin_Reworld.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ofxRulr\Data\Reworld\Column.cpp">
+      <Filter>src\ofxRulr\Data\Reworld</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ofxRulr\Data\Reworld\Module.cpp">
+      <Filter>src\ofxRulr\Data\Reworld</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ofxRulr\Nodes\Reworld\Installation.cpp">
+      <Filter>src\ofxRulr\Nodes\Reworld</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ofxRulr\Nodes\Reworld\ModulelView.cpp">
+      <Filter>src\ofxRulr\Nodes\Reworld</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ofxRulr\Nodes\Reworld\Router.cpp">
+      <Filter>src\ofxRulr\Nodes\Reworld</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ofxRulr\Nodes\Reworld\CameraTest.cpp">
+      <Filter>src\ofxRulr\Nodes\Reworld</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ofxRulr\Nodes\Reworld\ColumnView.cpp">
+      <Filter>src\ofxRulr\Nodes\Reworld</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ofxRulr\Nodes\Reworld\NavigatePointToPoint.cpp">
+      <Filter>src\ofxRulr\Nodes\Reworld</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ofxRulr\Nodes\Reworld\SimulateLightBeams.cpp">
+      <Filter>src\ofxRulr\Nodes\Reworld</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ofxRulr\Solvers\Reworld\Navigate\PointToPoint.cpp">
+      <Filter>src\ofxRulr\Solvers\Reworld\Navigate</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ofxRulr\Solvers\Reworld\Navigate\InVectorToPoint.cpp">
+      <Filter>src\ofxRulr\Solvers\Reworld\Navigate</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ofxRulr\Data\Reworld\Capture.cpp">
+      <Filter>src\ofxRulr\Data\Reworld</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ofxRulr\Nodes\Reworld\CalibrateController.cpp">
+      <Filter>src\ofxRulr\Nodes\Reworld</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ofxRulr\Nodes\Reworld\Calibrate.cpp">
+      <Filter>src\ofxRulr\Nodes\Reworld</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ofxRulr\Nodes\Reworld\CaptureView.cpp">
+      <Filter>src\ofxRulr\Nodes\Reworld</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ofxRulr\Models\Reworld\AxisAngles.cpp">
+      <Filter>src\ofxRulr\Models\Reworld</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ofxRulr\Nodes\Reworld\OSCReceiver.cpp">
+      <Filter>src\ofxRulr\Nodes\Reworld</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ofxRulr\Solvers\Reworld\Calibrate\ModulesFromProjections.cpp">
+      <Filter>src\ofxRulr\Solvers\Reworld\Calibrate</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\pch_Plugin_Reworld.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ofxRulr\Data\Reworld\Column.h">
+      <Filter>src\ofxRulr\Data\Reworld</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ofxRulr\Data\Reworld\Module.h">
+      <Filter>src\ofxRulr\Data\Reworld</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ofxRulr\Nodes\Reworld\ColumnView.h">
+      <Filter>src\ofxRulr\Nodes\Reworld</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ofxRulr\Nodes\Reworld\Installation.h">
+      <Filter>src\ofxRulr\Nodes\Reworld</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ofxRulr\Nodes\Reworld\ModuleView.h">
+      <Filter>src\ofxRulr\Nodes\Reworld</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ofxRulr\Nodes\Reworld\Router.h">
+      <Filter>src\ofxRulr\Nodes\Reworld</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ofxRulr\Nodes\Reworld\CameraTest.h">
+      <Filter>src\ofxRulr\Nodes\Reworld</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ofxRulr\Nodes\Reworld\NavigatePointToPoint.h">
+      <Filter>src\ofxRulr\Nodes\Reworld</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ofxRulr\Models\Reworld\Module.h">
+      <Filter>src\ofxRulr\Models\Reworld</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ofxRulr\Nodes\Reworld\SimulateLightBeams.h">
+      <Filter>src\ofxRulr\Nodes\Reworld</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ofxRulr\Solvers\Reworld\Navigate\PointToPoint.h">
+      <Filter>src\ofxRulr\Solvers\Reworld\Navigate</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ofxRulr\Solvers\Reworld\Navigate\Result.h">
+      <Filter>src\ofxRulr\Solvers\Reworld\Navigate</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ofxRulr\Solvers\Reworld\Navigate\InVectorToPoint.h">
+      <Filter>src\ofxRulr\Solvers\Reworld\Navigate</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ofxRulr\Nodes\Reworld\Calibrate.h">
+      <Filter>src\ofxRulr\Nodes\Reworld</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ofxRulr\Data\Reworld\Capture.h">
+      <Filter>src\ofxRulr\Data\Reworld</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ofxRulr\Nodes\Reworld\CalibrateController.h">
+      <Filter>src\ofxRulr\Nodes\Reworld</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ofxRulr\Models\Reworld\AxisAngles.h">
+      <Filter>src\ofxRulr\Models\Reworld</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ofxRulr\Nodes\Reworld\CaptureView.h">
+      <Filter>src\ofxRulr\Nodes\Reworld</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ofxRulr\Nodes\Reworld\OSCReceiver.h">
+      <Filter>src\ofxRulr\Nodes\Reworld</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ofxRulr\Solvers\Reworld\Calibrate\ModulesFromProjections.h">
+      <Filter>src\ofxRulr\Solvers\Reworld\Calibrate</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

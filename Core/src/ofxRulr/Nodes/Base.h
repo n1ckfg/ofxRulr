@@ -36,6 +36,10 @@
 	this->onPopulateInspector += [this](ofxCvGui::InspectArguments & args) { \
 		this->populateInspector(args); \
 	}
+#define RULR_NODE_REMOTE_CONTROL_LISTENER \
+	this->onRemoteControl += [this](ofxRulr::RemoteControllerArgs& args) { \
+		this->remoteControl(args); \
+	}
 #define RULR_NODE_SERIALIZATION_LISTENERS RULR_SERIALIZE_LISTENERS
 
 namespace ofxRulr {
@@ -48,6 +52,25 @@ namespace ofxRulr {
 		bool enableTextures = true;
 		bool enableNormals = true;
 		ofxLiquidEvent<void> onDrawFinal;
+		void* custom = nullptr;
+	};
+
+	struct RemoteControllerArgs {
+		struct Button {
+			bool up, down, left, right;
+			bool cross, circle, triangle, square;
+		};
+
+		bool next = false;
+		bool previous = false;
+
+		glm::vec2 analog1{ 0, 0 };
+		glm::vec2 analog2{ 0, 0 };
+		glm::vec2 combinedMovement{ 0, 0 };
+		
+		Button buttonDown; // down for one frame on press
+		Button buttonPress; // stays down
+		Button buttonUp; // down for one frame on release
 	};
 
 	namespace Graph {
@@ -92,6 +115,8 @@ namespace ofxRulr {
 			void drawWorldStage();
 			void drawWorldAdvanced(DrawWorldAdvancedArgs &);
 			WhenActive::Options getWhenDrawOnWorldStage() const;
+
+			void remoteControl(RemoteControllerArgs&);
 
 			template<typename NodeType>
 			void connect(shared_ptr<NodeType> node) {
@@ -160,6 +185,7 @@ namespace ofxRulr {
 			ofxLiquidEvent<void> onUpdate;
 			ofxLiquidEvent<void> onDrawWorldStage;
 			ofxLiquidEvent<DrawWorldAdvancedArgs> onDrawWorldAdvanced;
+			ofxLiquidEvent<RemoteControllerArgs> onRemoteControl;
 
 			ofxLiquidEvent<shared_ptr<Graph::AbstractPin>> onConnect;
 			ofxLiquidEvent<shared_ptr<Graph::AbstractPin>> onDisconnect;

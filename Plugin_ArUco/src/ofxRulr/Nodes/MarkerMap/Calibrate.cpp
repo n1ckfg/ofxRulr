@@ -6,12 +6,16 @@ namespace ofxRulr {
 		namespace MarkerMap {
 #pragma mark Capture
 			//----------
-			Calibrate::Capture::Capture() {
+			Calibrate::Capture::Capture()
+			{
 				RULR_SERIALIZE_LISTENERS;
+				RULR_NODE_INSPECTOR_LISTENER;
 			}
 
 			//----------
-			string Calibrate::Capture::getDisplayString() const {
+			string
+				Calibrate::Capture::getDisplayString() const
+			{
 				stringstream ss;
 				if (!this->name.get().empty()) {
 					ss << this->name.get() << " : ";
@@ -27,14 +31,247 @@ namespace ofxRulr {
 				}
 				return ss.str();
 			}
+			//---------
+			ofxCvGui::ElementPtr
+				Calibrate::Capture::getDataDisplay()
+			{
+				// ID
+				// Select / inspect
+				// Position
+				auto elementGroup = ofxCvGui::makeElementGroup();
+				this->dataDisplay = elementGroup;
+				
+				this->refreshDataDisplay();
 
-			//----------
-			void Calibrate::Capture::drawWorld() {
-
+				return elementGroup;
 			}
 
 			//----------
-			void Calibrate::Capture::serialize(nlohmann::json& json) const {
+			void
+				Calibrate::Capture::update(const UpdateArgs& args)
+			{
+				bool hasIssue = false;
+
+				// Check if camera position is within room bounds
+				{
+					auto position = this->cameraView.getPosition();
+					hasIssue |= position.x < args.roomMin.x;
+					hasIssue |= position.y < args.roomMin.y;
+					hasIssue |= position.z < args.roomMin.z;
+					hasIssue |= position.x > args.roomMax.x;
+					hasIssue |= position.y > args.roomMax.y;
+					hasIssue |= position.z > args.roomMax.z;
+					this->hasIssue = hasIssue;
+				}
+
+				// Store residuals to use in previews
+				{
+					this->maxResidual = args.maxResidual;
+				}
+
+				if (args.refreshDataDisplay) {
+					this->refreshDataDisplay();
+				}
+			}
+
+			//----------
+			void
+				Calibrate::Capture::refreshDataDisplay()
+			{
+				auto elementGroup = this->dataDisplay.lock();
+				if (!elementGroup) {
+					return;
+				}
+
+				auto y = 0;
+
+				vector<shared_ptr<ofxCvGui::Element>> widgets;
+
+				// Top row group
+				{
+					auto group = ofxCvGui::makeElementGroup();
+					vector<shared_ptr<ofxCvGui::Element>> groupWidgets;
+
+					// Inspect
+					{
+						auto widget = make_shared<ofxCvGui::Widgets::Toggle>("Inspect"
+							, [this]() {
+								return this->isBeingInspected();
+							}
+							, [this](bool value) {
+								if (value) {
+									ofxCvGui::inspect(this->shared_from_this());
+								}
+							});
+						widget->setDrawGlyph(u8"\uf101");
+						group->add(widget);
+						groupWidgets.push_back(widget);
+					}
+
+					// Initialised
+					{
+						auto widget = make_shared<ofxCvGui::Widgets::Toggle>("Initialised"
+							, [this]() {
+								return this->initialised;
+							}
+							, [this](bool value) {
+								this->initialised = value;
+							});
+						widget->setDrawGlyph(u8"\uf00c");
+						group->add(widget);
+						groupWidgets.push_back(widget);
+					}
+
+					// Markers
+					for (size_t i = 0; i < IDs.size(); i++) {
+						{
+
+							auto widget = ofxCvGui::makeElement();
+							widget->onDraw += [this, i](ofxCvGui::DrawArguments& args) {
+								auto ID = this->IDs[i];
+								auto hasResidual = this->residuals.size() > i;
+
+								// Data that needs other nodes
+								if (this->parent) {
+									auto markersNode = this->parent->getInput<Markers>();
+									if (markersNode) {
+										// Draw the marker preview
+										auto detector = markersNode->getInput<ArUco::Detector>();
+										if (detector) {
+											auto size = min(args.localBounds.getHeight(), args.localBounds.getWidth());
+											const auto& markerImage = detector->getMarkerImage(ID);
+											ofPushStyle();
+											{
+												ofSetColor(100); // Dim the marker view (so we can see text)
+												markerImage.draw(args.localBounds.getCenter() - glm::vec2(size, size) / 2.0f
+													, size
+													, size);
+											}
+											ofPopStyle();
+										}
+
+										// Draw an indicator if this marker is already seen elsewhere
+										try {
+											if (markersNode->getMarkerByID(ID)) {
+												// Marker already exists in set
+												ofPushStyle();
+												{
+													ofSetColor(100, 255, 100);
+													ofDrawCircle(args.localBounds.getBottomRight() + glm::vec2(-4, -4), 3);
+												}
+												ofPopStyle();
+											}
+										}
+										catch (...) {
+
+										}
+									}
+								}
+
+								// Draw the reprojection bar
+								if (hasResidual) {
+									ofPushStyle();
+									{
+										ofSetColor(255, 0, 0);
+
+										auto residual = this->residuals[i];
+										auto residualNorm = residual / this->maxResidual;
+										auto y = args.localBounds.height * (1.0f - residualNorm);
+										ofDrawRectangle(0
+											, y
+											, 5
+											, args.localBounds.height - y);
+									}
+									ofPopStyle();
+								}
+
+								// Draw the marker index
+								{
+									ofxCvGui::Utils::drawText(ofToString(ID), args.localBounds, false);
+								}
+							};
+
+							{
+								auto ID = this->IDs[i];
+								auto hasResidual = this->residuals.size() > i;
+								if (hasResidual) {
+									auto residual = this->residuals[i];
+									widget->addToolTip(ofToString(ID) + " (" + ofToString(residual) + ")");
+								}
+								else {
+									widget->addToolTip(ofToString(ID));
+								}
+							}
+							group->add(widget);
+							groupWidgets.push_back(widget);
+						}
+					}
+
+					group->setHeight(50);
+					group->onBoundsChange += [groupWidgets](ofxCvGui::BoundsChangeArguments& args) {
+						auto itemWidth = args.localBounds.width / groupWidgets.size();
+						auto height = args.localBounds.height;
+						auto x = 0;
+						for (auto widget : groupWidgets) {
+							widget->setBounds(ofRectangle(x, 0, itemWidth - 5, height));
+							x += itemWidth;
+						}
+					};
+
+					y += group->getHeight();
+					elementGroup->add(group);
+					widgets.push_back(group);
+				}
+
+				elementGroup->setHeight(y + 5);
+				elementGroup->onBoundsChange += [widgets](ofxCvGui::BoundsChangeArguments& args) {
+					for (auto widget : widgets) {
+						widget->setWidth(args.localBounds.width);
+					}
+				};
+
+				elementGroup->onDraw += [this](ofxCvGui::DrawArguments& args)
+				{
+					if (this->hasIssue) {
+						ofPushStyle();
+						{
+							ofSetColor(255, 0, 0);
+							ofNoFill();
+							ofDrawRectangle(args.localBounds);
+						}
+						ofPopStyle();
+					}
+				};
+			}
+
+			//----------
+			void
+				Calibrate::Capture::drawWorld()
+			{
+				bool isHighlighted = false;
+
+				// Check if the mouse is over element in capture list
+				{
+					auto dataDisplay = this->dataDisplay.lock();
+					if (dataDisplay) {
+						isHighlighted |= dataDisplay->isMouseOver();
+					}
+				}
+
+				// Check if is being inspected
+				if (this->isBeingInspected()) {
+					isHighlighted = true;
+				}
+
+				if (isHighlighted) {
+					ofxCvGui::Utils::drawTextAnnotation(this->name, this->cameraView.getPosition(), this->color);
+				}
+			}
+
+			//----------
+			void
+				Calibrate::Capture::serialize(nlohmann::json& json) const
+			{
 				Utils::serialize(json, this->name);
 				Utils::serialize(json, "IDs", this->IDs);
 				Utils::serialize(json, "imagePoints", this->imagePoints);
@@ -46,7 +283,9 @@ namespace ofxRulr {
 			}
 
 			//----------
-			void Calibrate::Capture::deserialize(const nlohmann::json& json) {
+			void
+				Calibrate::Capture::deserialize(const nlohmann::json& json)
+			{
 				Utils::deserialize(json, this->name);
 				Utils::deserialize(json, "IDs", this->IDs);
 				Utils::deserialize(json, "imagePoints", this->imagePoints);
@@ -54,6 +293,112 @@ namespace ofxRulr {
 				Utils::deserialize(json, "residuals", this->residuals);
 				Utils::deserialize(json, "cameraView", this->cameraView);
 				Utils::deserialize(json, "initialised", this->initialised);
+			}
+
+			//----------
+			void
+				Calibrate::Capture::populateInspector(ofxCvGui::InspectArguments& args)
+			{
+				auto inspector = args.inspector;
+
+				inspector->addToggle("Initialised"
+					, [this]() {
+						return this->initialised;
+					}
+					, [this](bool value) {
+						this->initialised = value;
+					});
+
+				inspector->addEditableValue<glm::vec3>("Position"
+					, [this]() {
+						return this->cameraView.getPosition();
+					}
+					, [this](const string& valueString) {
+						if (!valueString.empty()) {
+							stringstream ss(valueString);
+							glm::vec3 value;
+							ss >> value;
+							this->cameraView.setPosition(value);
+						}
+					});
+
+				inspector->addEditableValue<glm::vec3>("Rotation"
+					, [this]() {
+						auto quat = this->cameraView.getOrientationQuat();
+						return glm::eulerAngles(quat);
+					}
+					, [this](const string& valueString) {
+						if (!valueString.empty()) {
+							stringstream ss(valueString);
+							glm::vec3 value;
+							ss >> value;
+							glm::quat quat(value); // convert from euler to quat
+							this->cameraView.setOrientation(quat);
+						}
+					});
+
+				inspector->addButton("Reset transform", [this]() {
+					this->cameraView.resetTransform();
+					});
+
+				// Image view
+				{
+					auto view = ofxCvGui::makeElement();
+					view->setWidth(200);
+					view->setHeight(200);
+					view->onDraw += [this](ofxCvGui::DrawArguments& args) {
+						// Draw outline
+						ofPushStyle();
+						{
+							ofNoFill();
+							ofDrawRectangle(args.localBounds);
+						}
+						ofPopStyle();
+
+						// Scale the view for camera coords
+						ofPushMatrix();
+						{
+							ofScale(args.localBounds.width / this->cameraView.getWidth()
+								, args.localBounds.height / this->cameraView.getHeight());
+
+
+							// Draw markers
+							ofPushStyle();
+							{
+								ofNoFill();
+
+								auto size = this->IDs.size();
+								if (size == this->imagePointsUndistorted.size()) {
+									for (size_t i = 0; i < size; i++) {
+										const auto& ID = this->IDs[i];
+										const auto& imagePointsUndistorted = this->imagePointsUndistorted[i];
+
+										// Draw outline
+										{
+											ofPolyline line;
+											for (auto& vertex : imagePointsUndistorted) {
+												line.addVertex(glm::vec3(vertex, 0.0f));
+											}
+											line.close();
+											line.draw();
+										}
+
+										// Draw label at origin
+										{
+											if (!imagePointsUndistorted.empty()) {
+												ofDrawBitmapStringHighlight(ofToString(ID), imagePointsUndistorted.front());
+											}
+										}
+
+									}
+								}
+							}
+							ofPopStyle();
+						}
+						ofPopMatrix();
+					};
+					inspector->add(view);
+				}
 			}
 
 			//----------
@@ -100,13 +445,17 @@ namespace ofxRulr {
 
 			//----------
 			void Calibrate::update() {
-
+				if (this->dirty.capturePreviews) {
+					this->updateCapturePreviews();
+				}
 			}
 
 			//----------
 			void Calibrate::drawWorldStage() {
 				auto captures = this->captures.getSelection();
 				for (auto capture : captures) {
+					capture->drawWorld();
+
 					if (this->parameters.draw.cameraRays.get()) {
 						for (const auto& cameraRay : capture->cameraRays) {
 							cameraRay.draw();
@@ -192,7 +541,17 @@ namespace ofxRulr {
 			void Calibrate::deserialize(const nlohmann::json& json) {
 				if (json.contains("captures")) {
 					this->captures.deserialize(json["captures"]);
+
+					// Set the parent to this
+					{
+						auto allCaptures = this->captures.getAllCaptures();
+						for (auto capture : allCaptures) {
+							capture->parent = this;
+						}
+					}
 				}
+
+				this->dirty.capturePreviews = true;
 			}
 
 			//----------
@@ -218,6 +577,8 @@ namespace ofxRulr {
 				this->throwIfMissingAnyConnection();
 				auto camera = this->getInput<Item::Camera>();
 				auto markersNode = this->getInput<Markers>();
+				markersNode->throwIfMissingAnyConnection();
+				auto detectorNode = markersNode->getInput<ArUco::Detector>();
 
 				auto initialisationMarkers = markersNode->getMarkers();
 				auto activeCaptures = this->captures.getSelection();
@@ -299,6 +660,7 @@ namespace ofxRulr {
 					if (create) {
 						auto marker = make_shared<Markers::Marker>();
 						marker->parameters.ID.set(ID);
+						marker->parameters.length.set(detectorNode->getMarkerLength());
 
 						// Note that this function sets length and parent
 						markersNode->add(marker);
@@ -603,9 +965,9 @@ namespace ofxRulr {
 							// Unproject camera rays for image points
 							for (auto capture : activeCaptures) {
 								capture->cameraRays.clear();
-								for (const auto& imagePoints : capture->imagePoints) {
+								for (const auto& imagePointsUndistorted : capture->imagePointsUndistorted) {
 									vector<ofxRay::Ray> cameraRays;
-									capture->cameraView.castPixels(imagePoints, cameraRays, false);
+									capture->cameraView.castPixels(imagePointsUndistorted, cameraRays, false);
 									for (auto& ray : cameraRays) {
 										ray.color = capture->color;
 										ray.t = glm::normalize(ray.t) * this->parameters.debug.cameraRayLength.get();
@@ -660,6 +1022,8 @@ namespace ofxRulr {
 						}
 					}
 				}
+
+				this->dirty.capturePreviews = true;
 			}
 
 			//----------
@@ -806,6 +1170,8 @@ namespace ofxRulr {
 						, markers
 						, images);
 				}
+
+				this->dirty.capturePreviews = true;
 			}
 
 			//----------
@@ -1028,6 +1394,8 @@ namespace ofxRulr {
 				}
 
 				scopedProcess.end();
+
+				this->dirty.capturePreviews = true;
 			}
 			//----------
 			void Calibrate::add(const cv::Mat& image, const string& name) {
@@ -1047,6 +1415,7 @@ namespace ofxRulr {
 				}
 
 				auto capture = make_shared<Capture>();
+				capture->parent = this;
 				capture->name.set(name);
 				for (const auto& foundMarker : foundMarkers) {
 					capture->IDs.push_back(foundMarker.id);
@@ -1057,6 +1426,8 @@ namespace ofxRulr {
 					capture->imagePoints.push_back(ofxCv::toOf((vector<cv::Point2f>&) foundMarker));
 				}
 				this->captures.add(capture);
+
+				this->dirty.capturePreviews = true;
 			}
 
 			//----------
@@ -1093,6 +1464,8 @@ namespace ofxRulr {
 					}
 					RULR_CATCH_ALL_TO_ERROR;
 				}
+
+				this->dirty.capturePreviews = true;
 			}
 
 			//----------
@@ -1120,9 +1493,9 @@ namespace ofxRulr {
 					// Unproject camera rays for image points
 					for (auto capture : captures) {
 						capture->cameraRays.clear();
-						for (const auto& imagePoints : capture->imagePoints) {
+						for (const auto& imagePointsUndistorted : capture->imagePointsUndistorted) {
 							vector<ofxRay::Ray> cameraRays;
-							capture->cameraView.castPixels(imagePoints, cameraRays, false);
+							capture->cameraView.castPixels(imagePointsUndistorted, cameraRays, false);
 							for (auto& ray : cameraRays) {
 								ray.color = capture->color;
 								ray.t = glm::normalize(ray.t) * this->parameters.debug.cameraRayLength.get();
@@ -1141,7 +1514,9 @@ namespace ofxRulr {
 							captures[image.viewIndex]->residuals.push_back(solution.reprojectionErrorPerImage[i]);
 						}
 					}
+				this->dirty.capturePreviews = true;
 			};
+
 			//----------
 			void Calibrate::initialiseCaptureViewWithSeenMarkers(shared_ptr<Capture> capture) {
 				this->throwIfMissingAConnection<Markers>();
@@ -1168,7 +1543,7 @@ namespace ofxRulr {
 								continue;
 							}
 
-							const auto& markerImagePoints = ofxCv::toCv(capture->imagePointsUndistorted[i]);
+							const auto& markerImagePoints = ofxCv::toCv(capture->imagePoints[i]);
 							imagePoints.insert(imagePoints.end(), markerImagePoints.begin(), markerImagePoints.end());
 
 							const auto markerWorldPoints = ofxCv::toCv(marker->getWorldVertices());
@@ -1198,6 +1573,8 @@ namespace ofxRulr {
 					capture->cameraView.color = capture->color;
 					capture->initialised = true;
 				}
+
+				this->dirty.capturePreviews = true;
 			}
 
 			//----------
@@ -1215,6 +1592,7 @@ namespace ofxRulr {
 					lastActiveCaptureCount = newActiveCaptureCount;
 				}
 				scopedProcess.end();
+				this->dirty.capturePreviews = true;
 			}
 
 			//----------
@@ -1223,6 +1601,10 @@ namespace ofxRulr {
 				this->throwIfMissingAConnection<Item::Camera>();
 
 				auto markersNode = this->getInput<Markers>();
+				markersNode->throwIfMissingAnyConnection();
+				auto detector = markersNode->getInput<ArUco::Detector>();
+				auto markerLength = detector->getMarkerLength();
+
 				auto camera = this->getInput<Item::Camera>();
 
 				for (int i = 0; i < capture->IDs.size(); i++) {
@@ -1238,6 +1620,7 @@ namespace ofxRulr {
 
 					auto marker = make_shared<Markers::Marker>();
 					marker->parameters.ID.set(markerID); 
+					marker->parameters.length.set(markerLength);
 
 					// Note that this function sets length and parent
 					markersNode->add(marker);
@@ -1261,6 +1644,43 @@ namespace ofxRulr {
 					auto transform = capture->cameraView.getLocalTransformMatrix() * marker->rigidBody->getTransform();
 					marker->rigidBody->setTransform(transform);
 				}
+
+				this->dirty.capturePreviews = true;
+			}
+
+			//----------
+			void Calibrate::updateCapturePreviews()
+			{
+				auto captures = this->captures.getAllCaptures();
+
+				// Calculate the max residual
+				float maxResidual = 0.01;
+				for (auto capture : captures) {
+					for (auto residual : capture->residuals) {
+						if (residual > maxResidual) {
+							maxResidual = residual;
+						}
+					}
+				}
+
+				// Get room min and room max
+				auto worldStage = ofxRulr::Graph::World::X().getWorldStage();
+				auto worldStagePanel = worldStage->getPanelTyped();
+				auto roomMin = worldStagePanel->parameters.grid.roomMin.get();
+				auto roomMax = worldStagePanel->parameters.grid.roomMax.get();
+
+				// Update the captures
+				Capture::UpdateArgs args{
+					maxResidual
+					, roomMin
+					, roomMax
+					, true
+				};
+				for (auto capture : captures) {
+					capture->update(args);
+				}
+
+				this->dirty.capturePreviews = false;
 			}
 		}
 	}

@@ -61,6 +61,10 @@ namespace ofxRulr {
 
 				//----------
 				nlohmann::json Dispatcher::request(const ofHttpRequest & request) {
+					if (!this->parameters.enabled.get()) {
+						return nlohmann::json();
+					}
+
 					ofURLFileLoader urlLoader;
 					auto response = urlLoader.handleRequest(request);
 
@@ -171,6 +175,9 @@ namespace ofxRulr {
 					requestJson["registerType"] = multiGetRequest.registerName;
 
 					auto result = this->requestPOST("/Servo/MultiGet", requestJson);
+					if (result.empty()) {
+						throw(ofxRulr::Exception("Empty response to multiGetRequest"));
+					}
 					auto values = result.get<vector<Dispatcher::RegisterValue>>();
 					return values;
 				}

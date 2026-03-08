@@ -566,6 +566,18 @@ namespace ofxRulr {
 			std::future<void>
 				Laser::drawPicture(const vector<glm::vec2>& projectionPoints)
 			{
+				// check if any projectionPoints are invalid
+				for (const auto& projectionPoint : projectionPoints) {
+					if (abs(projectionPoint.x) > 1.0f || abs(projectionPoint.y) > 1.0f) {
+						throw(ofxRulr::Exception("Picture is outside of limits"));
+					}
+				}
+
+				if (projectionPoints.size() < 256) {
+					throw(ofxRulr::Exception("Insufficient points for a projector picture"));
+				}
+
+				// Create the message
 				auto message = this->createOutgoingMessageRetry();
 				{
 					message->setAddress("/picture/picture");
@@ -574,6 +586,8 @@ namespace ofxRulr {
 						message->addFloatArg(projectionPoint.y);
 					}
 				}
+
+				// Route the message
 				auto future = message->onSent.get_future();
 				this->sendMessage(message);
 				this->lastPictureSent = projectionPoints;
@@ -582,10 +596,10 @@ namespace ofxRulr {
 			}
 
 			//----------
-			std::future<void>
-				Laser::drawWorldPoints(const vector<glm::vec3>& worldPoints)
+			vector<glm::vec2>
+				Laser::renderWorldPoints(const vector<glm::vec3>& worldPoints, const vector<glm::vec2>& priorPicture) const
 			{
-				bool usePriors = this->lastPictureSent.size() == worldPoints.size();
+				bool usePriors = priorPicture.size() == worldPoints.size();
 
 				const auto& solverSettings = ofxRulr::Solvers::NavigateToWorldPoint::defaultSolverSettings();
 				const auto& laserProjectorModel = this->getModel();
@@ -627,8 +641,40 @@ namespace ofxRulr {
 						results.push_back(result.solution.point);
 					}
 				}
-				
-				return this->drawPicture(results);
+
+				return results;
+			}
+
+			//----------
+			vector<glm::vec2>
+				Laser::renderWorldPointsFast(const vector<glm::vec3>& worldPoints) const
+			{
+				// Perhaps this could be cached
+				auto viewTransform = glm::inverse(this->rigidBody->getTransform());
+
+				const auto halfFov = this->parameters.intrinsics.fov.get() / 2.0f * DEG_TO_RAD;
+
+				vector<glm::vec2> picture;
+
+				for (const auto& worldPoint : worldPoints) {
+					auto point_view = ofxCeres::VectorMath::applyTransform(viewTransform, worldPoint);
+					auto point_projected = glm::vec2(point_view.x, point_view.y) / point_view.z;
+					
+					auto tilt = atan(point_projected.y);
+					auto pan = atan(point_projected.x * cos(tilt));
+
+					picture.push_back({ pan / halfFov.x, tilt / halfFov.y });
+				}
+
+				return picture;
+			}
+
+			//----------
+			std::future<void>
+				Laser::drawWorldPoints(const vector<glm::vec3>& worldPoints)
+			{
+				auto picture = this->renderWorldPoints(worldPoints, this->getLastPicture());
+				return this->drawPicture(picture);
 			}
 
 			//----------
@@ -661,6 +707,7 @@ namespace ofxRulr {
 				return Models::LaserProjector{
 					this->rigidBody->getTransform()
 					, this->parameters.intrinsics.fov.get()
+					, this->parameters.intrinsics.fov2.get()
 				};
 			}
 

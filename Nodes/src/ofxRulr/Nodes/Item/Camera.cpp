@@ -26,9 +26,6 @@ namespace ofxRulr {
 				RULR_NODE_SERIALIZATION_LISTENERS;
 				RULR_NODE_INSPECTOR_LISTENER;
 
-				this->showSpecification.set("Show specification", false);
-				this->showFocusLine.set("Show focus line", true);
-
 				this->grabber = make_shared<ofxMachineVision::Grabber::Simple>();
 				this->grabber->onNewFrameReceived += [this](shared_ptr<Frame> frame) {
 					this->onNewFrame.notifyListeners(move(frame));
@@ -44,6 +41,8 @@ namespace ofxRulr {
 						this->getViewInObjectSpace().drawOnNearPlane(this->preview);
 					}
 				};
+
+				this->manageParameters(this->parameters);
 			}
 
 			//----------
@@ -55,7 +54,7 @@ namespace ofxRulr {
 			void Camera::update() {
 				this->grabber->update();
 
-				if (this->showFocusLine) {
+				if (this->parameters.preview.focusLine) {
 					if (this->grabber->isFrameNew()) {
 						auto frame = this->grabber->getFrame();
 						const auto & pixels = frame->getPixels();
@@ -73,15 +72,22 @@ namespace ofxRulr {
 				}
 
 				if (this->grabber && this->grabber->isFrameNew()) {
-					auto pixels = this->grabber->getPixels();
+					auto & pixels = this->grabber->getPixels();
 					if (pixels.size() != 0) {
 						this->preview.allocate(pixels.getWidth()
 							, pixels.getHeight()
 							, pixels.getImageType());
-						cv::undistort(ofxCv::toCv(pixels)
-							, ofxCv::toCv(this->preview.getPixels())
-							, this->getCameraMatrix()
-							, this->getDistortionCoefficients());
+
+						if (this->parameters.preview.undistort) {
+							cv::undistort(ofxCv::toCv(pixels)
+								, ofxCv::toCv(this->preview.getPixels())
+								, this->getCameraMatrix()
+								, this->getDistortionCoefficients());
+						}
+						else {
+							this->preview.getPixels() = pixels;
+						}
+
 						this->preview.update();
 					}
 				}
@@ -283,6 +289,13 @@ namespace ofxRulr {
 			}
 
 			//----------
+			const ofImage &
+				Camera::getPreview() const
+			{
+				return this->preview;
+			}
+
+			//----------
 			void Camera::rebuildPanel() {
 				this->placeholderPanel->clear();
 				if (this->grabber->getIsDeviceOpen()) {
@@ -299,7 +312,7 @@ namespace ofxRulr {
 			void Camera::buildGrabberPanel() {
 				this->grabberPanel = ofxCvGui::Panels::makeBaseDraws(*this->grabber);
 				this->grabberPanel->onDraw += [this](ofxCvGui::DrawArguments & args) {
-					if (this->showSpecification) {
+					if (this->parameters.preview.specification) {
 						stringstream status;
 						status << "Device ID : " << this->getGrabber()->getDeviceID() << endl;
 						status << endl;
@@ -309,7 +322,7 @@ namespace ofxRulr {
 					}
 				};
 				this->grabberPanel->onDrawImage += [this](DrawImageArguments & args) {
-					if (this->showFocusLine) {
+					if (this->parameters.preview.focusLine) {
 						ofPushMatrix();
 						ofPushStyle();
 
@@ -439,9 +452,6 @@ namespace ofxRulr {
 			//----------
 			void Camera::populateInspector(InspectArguments & inspectArguments) {
 				auto inspector = inspectArguments.inspector;
-
-				inspector->add(new Widgets::Toggle(this->showSpecification));
-				inspector->add(new Widgets::Toggle(this->showFocusLine));
 
 				inspector->add(new Widgets::Title("Device", Widgets::Title::H2));
 				inspector->add(new Widgets::LiveValue<string>("Device Type", [this]() {

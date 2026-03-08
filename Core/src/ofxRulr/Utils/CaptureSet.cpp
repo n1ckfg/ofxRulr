@@ -242,20 +242,20 @@ namespace ofxRulr {
 			}
 
 			auto captureWeak = weak_ptr<BaseCapture>(capture);
-			capture->onDeletePressed += [captureWeak, this]() {
+			capture->onDeletePressed.addListener([captureWeak, this]() {
 				this->listView->clear();
 				this->viewDirty = true;
 				auto capture = captureWeak.lock();
 				if (capture) {
 					this->remove(capture);
 				}
-			};
+			}, this);
 
-			capture->onChange += [this]() {
+			capture->onChange.addListener([this]() {
 				this->onChange.notifyListeners();
-			};
+			}, this);
 
-			capture->onSelectionChanged += [captureWeak, this](bool selection) {
+			capture->onSelectionChanged.addListener([captureWeak, this](bool selection) {
 				if (!this->getIsMultipleSelectionAllowed() && selection) {
 					auto selectionSet = this->getSelectionUntyped();
 					auto selectedCapture = captureWeak.lock();
@@ -266,7 +266,7 @@ namespace ofxRulr {
 					}
 				}
 				this->onSelectionChanged.notifyListeners();
-			};
+			}, this);
 
 			this->onChange.notifyListeners();
 			this->onSelectionChanged.notifyListeners();
@@ -282,6 +282,7 @@ namespace ofxRulr {
 				if (capture) {
 					capture->setSelected(false); // to notify upwards (onChange, onSelectionChange)
 					capture->onDeletePressed.removeListeners(this);
+					capture->onChange.removeListeners(this);
 					capture->onSelectionChanged.removeListeners(this);
 				}
 				this->captures.erase(findCapture);
@@ -296,6 +297,21 @@ namespace ofxRulr {
 				this->remove(* this->captures.begin());
 			}
 			this->viewDirty = true;
+		}
+
+		//----------
+		void AbstractCaptureSet::resize(size_t count, std::function<shared_ptr<BaseCapture>()> createFunction) {
+			if (count == 0) {
+				this->clear();
+			}
+
+			while (this->captures.size() > count) {
+				this->remove(* this->getAllCapturesUntyped().rbegin());
+			}
+
+			while (this->captures.size() < count) {
+				this->add(createFunction());
+			}
 		}
 
 		//----------

@@ -1,0 +1,78 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="src\pch_Plugin_OpticsSolvers.cpp" />
+    <ClCompile Include="src\plugin.cpp" />
+    <ClCompile Include="src\ofxRulr\Nodes\OpticsSolvers\ScreenTarget.cpp">
+      <Filter>src\ofxRulr\Nodes\OpticsSolvers</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ofxRulr\Nodes\OpticsSolvers\LensMirror.cpp">
+      <Filter>src\ofxRulr\Nodes\OpticsSolvers</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ofxRulr\Nodes\OpticsSolvers\SimulateAndOptimise.cpp">
+      <Filter>src\ofxRulr\Nodes\OpticsSolvers</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ofxRulr\Solvers\OpticsSolvers\LensMirrorProjection.cpp">
+      <Filter>src\ofxRulr\Solvers\OpticsSolvers</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ofxRulr\Solvers\OpticsSolvers\SphericalLensMirrorProjection.cpp">
+      <Filter>src\ofxRulr\Solvers\OpticsSolvers</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ofxRulr\Solvers\OpticsSolvers\LensMirrorProjection2.cpp">
+      <Filter>src\ofxRulr\Solvers\OpticsSolvers</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\pch_Plugin_OpticsSolvers.h" />
+    <ClInclude Include="src\ofxRulr\Nodes\OpticsSolvers\ScreenTarget.h">
+      <Filter>src\ofxRulr\Nodes\OpticsSolvers</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ofxRulr\Nodes\OpticsSolvers\LensMirror.h">
+      <Filter>src\ofxRulr\Nodes\OpticsSolvers</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ofxRulr\Models\OpticsSolvers\LensMirror.h">
+      <Filter>src\ofxRulr\Models\OpticsSolvers</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ofxRulr\Nodes\OpticsSolvers\SimulateAndOptimise.h">
+      <Filter>src\ofxRulr\Nodes\OpticsSolvers</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ofxRulr\Solvers\OpticsSolvers\LensMirrorProjection.h">
+      <Filter>src\ofxRulr\Solvers\OpticsSolvers</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ofxRulr\Solvers\OpticsSolvers\SphericalLensMirrorProjection.h">
+      <Filter>src\ofxRulr\Solvers\OpticsSolvers</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ofxRulr\Models\OpticsSolvers\SphericalLensMirror.h">
+      <Filter>src\ofxRulr\Models\OpticsSolvers</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ofxRulr\Solvers\OpticsSolvers\LensMirrorProjection2.h">
+      <Filter>src\ofxRulr\Solvers\OpticsSolvers</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="src">
+      <UniqueIdentifier>{92709a47-c93e-4e7a-96a7-bf1f4aa3fc7d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\ofxRulr">
+      <UniqueIdentifier>{449dc5ea-5d08-429c-9e81-4e40c5d6cf4b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\ofxRulr\Nodes">
+      <UniqueIdentifier>{2f87df9a-3fcf-40b1-9a2a-190ffa027058}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\ofxRulr\Nodes\OpticsSolvers">
+      <UniqueIdentifier>{761fb8ab-4ecd-497d-b3d2-3ba14f782425}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\ofxRulr\Models">
+      <UniqueIdentifier>{49033293-ebd7-4bae-9f35-18765a66ef15}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\ofxRulr\Models\OpticsSolvers">
+      <UniqueIdentifier>{b291f6a1-cfc6-4d92-9571-85c2f2b8cd5a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\ofxRulr\Solvers">
+      <UniqueIdentifier>{fd5b3d41-608b-4121-ba4e-1c76c8fc7cd3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\ofxRulr\Solvers\OpticsSolvers">
+      <UniqueIdentifier>{c2fd1bae-f3eb-47aa-9592-39e58db58de9}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

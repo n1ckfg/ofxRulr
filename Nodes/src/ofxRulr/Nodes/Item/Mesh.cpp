@@ -53,6 +53,63 @@ namespace ofxRulr {
 				if (this->textureDirty) {
 					this->loadTexture();
 				}
+				if (this->modelLoader) {
+					switch (this->parameters.drawStyle.cull.get().get()) {
+					case Cull::None:
+						this->modelLoader->disableCulling();
+						break;
+					case Cull::CW:
+						this->modelLoader->enableCulling(GL_CW);
+						break;
+					case Cull::CCW:
+						this->modelLoader->enableCulling(GL_CCW);
+						break;
+					}
+				}
+
+				if (this->meshAnalysisCache.needsRecalculate) {
+					if (this->modelLoader) {
+						// vertex count
+						{
+							auto meshCount = this->modelLoader->getNumMeshes();
+							vector<size_t> vertexCounts;
+							for (uint32_t i = 0; i < meshCount; i++) {
+								vertexCounts.push_back(this->modelLoader->getMesh(i).getNumVertices());
+							}
+							size_t totalCount = 0;
+							for (const auto& vertexCount : vertexCounts) {
+								totalCount += vertexCount;
+							}
+
+							stringstream message;
+							message << totalCount << " [";
+							bool first = true;
+							for (const auto& vertexCount : vertexCounts) {
+								if (!first) {
+									message << ", ";
+								}
+								else {
+									first = false;
+								}
+								message << vertexCount;
+							}
+							message << "]";
+							this->meshAnalysisCache.vertexCount = message.str();
+						}
+
+						this->meshAnalysisCache.numMeshes = this->modelLoader->getNumMeshes();
+						this->meshAnalysisCache.sceneMin = this->modelLoader->getSceneMin();
+						this->meshAnalysisCache.sceneMax = this->modelLoader->getSceneMax();
+					}
+					else {
+						this->meshAnalysisCache.vertexCount = "";
+						this->meshAnalysisCache.sceneMin = { 0, 0, 0 };
+						this->meshAnalysisCache.sceneMax = { 0, 0, 0 };
+						this->meshAnalysisCache.numMeshes = 0;
+					}
+
+					this->meshAnalysisCache.needsRecalculate = false;
+				}
 			}
 
 			//----------
@@ -298,61 +355,17 @@ namespace ofxRulr {
 					inspector->add(clearButton);
 				}
 				
-
 				inspector->addLiveValue<uint32_t>("Mesh count", [this]() {
-					if (this->modelLoader) {
-						return this->modelLoader->getNumMeshes();
-					}
-					else {
-						return 0U;
-					}
+					return this->meshAnalysisCache.numMeshes;
 				});
 				inspector->addLiveValue<string>("Vertex count", [this]() {
-					if (this->modelLoader) {
-						auto meshCount = this->modelLoader->getNumMeshes();
-						vector<size_t> vertexCounts;
-						for (uint32_t i = 0; i < meshCount; i++) {
-							vertexCounts.push_back(this->modelLoader->getMesh(i).getNumVertices());
-						}
-						size_t totalCount = 0;
-						for (const auto & vertexCount : vertexCounts) {
-							totalCount += vertexCount;
-						}
-
-						stringstream message;
-						message << totalCount << " [";
-						bool first = true;
-						for (const auto & vertexCount : vertexCounts) {
-							if (!first) {
-								message << ", ";
-							}
-							else {
-								first = false;
-							}
-							message << vertexCount;
-						}
-						message << "]";
-						return message.str();
-					}
-					else {
-						return string();
-					}
+					return this->meshAnalysisCache.vertexCount;
 				});
 				inspector->addLiveValue<glm::vec3>("Bounds min", [this]() {
-					if (this->modelLoader) {
-						return this->modelLoader->getSceneMin();
-					}
-					else {
-						return glm::vec3();
-					}
+					return this->meshAnalysisCache.sceneMin;
 				});
 				inspector->addLiveValue<glm::vec3>("Bounds max", [this]() {
-					if (this->modelLoader) {
-						return this->modelLoader->getSceneMax();
-					}
-					else {
-						return glm::vec3();
-					}
+					return this->meshAnalysisCache.sceneMax;
 				});
 
 				inspector->addParameterGroup(this->parameters);
@@ -365,10 +378,10 @@ namespace ofxRulr {
 				}
 				else {
 					this->modelLoader = make_unique<ofxAssimpModelLoader>();
-					if (!this->modelLoader->load(this->meshFilename.get())) {
+					if (!this->modelLoader->load(this->meshFilename.get(), ofxAssimpModelLoader::OPTIMIZE_NONE)) {
 						this->modelLoader.reset();
 					}
-				}	
+				}
 
 				if (this->modelLoader) {
 					this->modelLoader->calculateDimensions();
@@ -387,6 +400,75 @@ namespace ofxRulr {
 					this->texture.load(this->textureFilename.get());
 				}
 				this->textureDirty = false;
+			}
+
+			//----------
+
+			static bool copyFileIntoDataAndRetarget(const std::string& srcPath, std::string& targetParamToSet)
+			{
+				if (srcPath.empty()) {
+					return false;
+				}
+
+				ofFile src(srcPath);
+				if (!src.exists() || src.isDirectory()) {
+					ofLogWarning("Mesh") << "Source path does not exist or is a directory: " << srcPath;
+					return false;
+				}
+
+				// Ensure data directory exists
+				const std::string dataDirAbs = ofToDataPath("", /*absolute=*/true);
+				ofDirectory dataDir(dataDirAbs);
+				if (!dataDir.exists()) {
+					dataDir.create(true);
+				}
+
+				// Destination will be data/<filename.ext>
+				const std::string fileName = ofFilePath::getFileName(srcPath);
+				const std::string dstAbs = ofFilePath::join(dataDirAbs, fileName);
+
+				try {
+					// If already the same absolute file, no need to copy
+					if (!ofFile::doesFileExist(dstAbs, true)) {
+						// Copy to absolute path (bRelativeToData=false), overwrite=true
+						src.copyTo(dstAbs, /*bRelativeToData=*/false, /*overwrite=*/true);
+					}
+					// Retarget param to the relative filename (portable inside data/)
+					targetParamToSet = fileName;
+					return true;
+				}
+				catch (const std::exception& e) {
+					ofLogError("Mesh") << "Failed to copy '" << srcPath << "' to data folder: " << e.what();
+					return false;
+				}
+			}
+
+			//----------
+			void Mesh::copyFilesToLocal()
+			{
+				// Copy mesh file (if any) into data/ and retarget parameter to relative name
+				{
+					std::string path = this->meshFilename.get();
+					if (!path.empty()) {
+						string meshFilename = this->meshFilename.get();
+						if (copyFileIntoDataAndRetarget(path, meshFilename)) {
+							this->meshDirty = true; // reload from new local path
+							this->meshFilename.set(meshFilename);
+						}
+					}
+				}
+
+				// Copy texture file (if any) into data/ and retarget parameter to relative name
+				{
+					std::string path = this->textureFilename.get();
+					if (!path.empty()) {
+						auto textureFilename = this->textureFilename.get();
+						if (copyFileIntoDataAndRetarget(path, textureFilename)) {
+							this->textureDirty = true; // reload from new local path
+							this->textureFilename.set(textureFilename);
+						}
+					}
+				}
 			}
 		}
 	}

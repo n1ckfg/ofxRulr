@@ -186,6 +186,9 @@
     <ClCompile Include="src\pch_RulrCore.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\ofxRulr\Utils\IsFrameNew.cpp">
+      <Filter>src\ofxRulr\Utils</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\ofxClipboard\src\ofxClipboard.h">
@@ -346,6 +349,12 @@
     </ClInclude>
     <ClInclude Include="src\pch_RulrCore.h">
       <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ofxRulr\Utils\EditSelection.h">
+      <Filter>src\ofxRulr\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ofxRulr\Utils\IsFrameNew.h">
+      <Filter>src\ofxRulr\Utils</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

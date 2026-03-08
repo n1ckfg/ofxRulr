@@ -3,6 +3,7 @@
 #include <glm/glm.hpp>
 
 #include "ofxRulr/Nodes/Experiments/MirrorPlaneCapture/Dispatcher.h"
+#include "ofxCeres/Models/Plane.h"
 
 namespace ofxRulr {
 	namespace Solvers {
@@ -134,10 +135,10 @@ namespace ofxRulr {
 			};
 
 			template<typename T>
-			static void getMirrorCenterAndNormal(const AxisAngles<T>& axisAngles
-				, const Parameters<T>& parameters
-				, glm::tvec3<T>& center
-				, glm::tvec3<T>& normal) {
+			static
+				ofxCeres::Models::Plane<T>
+				getMirrorPlane(const AxisAngles<T>& axisAngles
+				, const Parameters<T>& parameters) {
 
 				auto mirrorTransform = glm::translate<T>(parameters.position)
 					* glm::rotate<T>(parameters.rotationY * DEG_TO_RAD
@@ -148,20 +149,29 @@ namespace ofxRulr {
 						, glm::normalize(parameters.axis2.rotationAxis))
 					* glm::translate<T>(glm::tvec3<T>(0, -parameters.mirrorOffset, 0));
 
-				center = ofxCeres::VectorMath::applyTransform<T>(mirrorTransform, { 0, 0, 0 });
+				auto center = ofxCeres::VectorMath::applyTransform<T>(mirrorTransform, { 0, 0, 0 });
 				auto centerPlusNormal = ofxCeres::VectorMath::applyTransform<T>(mirrorTransform, { 0, -1, 0 });
-				normal = ofxCeres::VectorMath::normalize(centerPlusNormal - center);
+				auto normal = ofxCeres::VectorMath::normalize(centerPlusNormal - center);
+
+				ofxCeres::Models::Plane<T> plane;
+				{
+					plane.center = center;
+					plane.normal = normal;
+				}
+				return plane;
 			}
 
 			template<typename T>
-			static T positionToAngle(const T& position, const glm::tvec3<T>& polynomial)
+			static T positionToAngle(const T& position
+				, const glm::tvec3<T>& polynomial
+				, const T& angleOffset)
 			{
 				auto correctedPosition =
 					polynomial[0]
 					+ position * polynomial[1]
 					+ position * position * polynomial[2];
 				auto angle = (correctedPosition - (T)2048.0) / (T)4096.0 * (T)360.0;
-				return angle;
+				return angle - angleOffset;
 			}
 
 			static void drawMirror(const glm::vec3& mirrorCenter
@@ -198,9 +208,9 @@ namespace ofxRulr {
 					, const AxisAngles<float>& axisAngles);
 
 				// returns true if angles were altered
-				static bool constrainAngles(const Parameters<float>&
-					, AxisAngles<float>& axisAngles
-					, const AxisAngles<float>& initialAngles);
+				static AxisAngles<float> constrainAngles(const Parameters<float>&
+					, const AxisAngles<float>& initialAngles
+					, bool& changed);
 
 				static Result solveConstrained(const Parameters<float>&
 					, std::function<Result(const AxisAngles<float>&)>
@@ -215,6 +225,7 @@ namespace ofxRulr {
 				static ofxCeres::SolverSettings defaultSolverSettings();
 
 				static Result solvePosition(const float& angle
+					, const float& angleOffset
 					, const glm::vec3& polynomial
 					, const Nodes::Experiments::MirrorPlaneCapture::Dispatcher::RegisterValue& priorPosition
 					, const ofxCeres::SolverSettings& solverSettings = defaultSolverSettings());
@@ -239,6 +250,8 @@ namespace ofxRulr {
 					, const vector<glm::vec3>& worldPoints
 					, const vector<int>& axis1ServoPosition
 					, const vector<int>& axis2ServoPosition
+					, const vector<float>& axis1AngleOffset
+					, const vector<float>& axis2AngleOffset
 					, const Parameters<float>& priorParameters
 					, const Options &
 					, const ofxCeres::SolverSettings & = Calibrator::defaultSolverSettings());
@@ -247,6 +260,8 @@ namespace ofxRulr {
 					, const glm::vec3 & worldPoint
 					, int axis1ServoPosition
 					, int axis2ServoPosition
+					, float axis1AngleOffset
+					, float axis2AngleOffset
 					, const Parameters<float>& hamParameters
 					, float mirrorDiameter);
 			};
