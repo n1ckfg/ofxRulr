@@ -104,6 +104,7 @@ EXPORTS
 	??9tpp@@YA_NAEBVfIterator@Delaunay@0@0@Z
 	??BofBuffer@@QEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@XZ
 	??BofQuaternion@@QEBA?AU?$qua@M$0A@@glm@@XZ
+	?ofBufferToFile@@YA_NAEBVpath@filesystem@std@@AEBVofBuffer@@_N@Z
 	?ofCircle@@YAXAEBU?$vec@$02M$0A@@glm@@M@Z
 	?ofCircle@@YAXMMM@Z
 	?ofClamp@@YAMMMM@Z
@@ -868,12 +869,15 @@ EXPORTS
 	?draw@Projector@ofxRay@@UEBAXXZ
 	?endAsCamera@Projector@ofxRay@@QEBAXXZ
 	?getClippedProjectionMatrix@Projector@ofxRay@@QEBA?AU?$mat@$03$03M$0A@@glm@@XZ
+	?getFarClip@Projector@ofxRay@@QEBAMXZ
 	?getHeight@Projector@ofxRay@@QEBAHXZ
+	?getNearClip@Projector@ofxRay@@QEBAMXZ
 	?getNormalizedSCoordinateOfWorldPosition@Projector@ofxRay@@QEBA?AU?$vec@$02M$0A@@glm@@U34@@Z
 	?getProjectionMatrix@Projector@ofxRay@@QEBA?AU?$mat@$03$03M$0A@@glm@@XZ
 	?getScreenCoordinateOfWorldPosition@Projector@ofxRay@@QEBA?AU?$vec@$02M$0A@@glm@@U34@@Z
 	?getViewMatrix@Projector@ofxRay@@QEBA?AU?$mat@$03$03M$0A@@glm@@XZ
 	?getWidth@Projector@ofxRay@@QEBAHXZ
+	?isProjectionMatrixInfinite@Projector@ofxRay@@QEBA_NXZ
 	?randomiseVectors@Projector@ofxRay@@UEAAXM@Z
 	?setFarClip@Projector@ofxRay@@QEAAXM@Z
 	?closestPointOnRayTo@Ray@ofxRay@@QEBA?AU?$vec@$02M$0A@@glm@@AEBU34@@Z

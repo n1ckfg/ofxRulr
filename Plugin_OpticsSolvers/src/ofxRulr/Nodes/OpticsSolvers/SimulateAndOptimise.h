@@ -23,6 +23,8 @@ namespace ofxRulr {
 
 				void simulate();
 				void optimise();
+
+				void exportSystem();
 			protected:
 				struct : ofParameterGroup {
 					struct : ofParameterGroup {
