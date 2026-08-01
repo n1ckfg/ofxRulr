@@ -219,6 +219,13 @@ namespace ofxRulr {
 					RULR_CATCH_ALL_TO_ALERT
 				}));
 
+				inspector->add(new Widgets::Button("Export for Unity...", [this]() {
+					try {
+						this->exportForUnity();
+					}
+					RULR_CATCH_ALL_TO_ALERT
+				}));
+
 				inspector->add(make_shared<Widgets::Spacer>());
 			}
 
@@ -389,6 +396,39 @@ namespace ofxRulr {
 						fs << "translation" << translation;
 						fs << "rotationMatrix" << rotationMatrix;
 					}
+				}
+			}
+
+			//----------
+			void View::exportForUnity() {
+				auto result = ofSystemSaveDialog(this->getName() + "-Unity.json", "Export Camera for Unity");
+				if (result.bSuccess) {
+					const auto view = this->getViewInWorldSpace();
+
+					// Standalone JSON export for use with the Unity RulrImport.cs editor script
+					// (see PlatformExamples/Unity/). Unlike the shared DECLARE_SERIALIZE_GLM_MAT
+					// serializer used for node persistence (which nests each matrix as 4 arrays
+					// of 4 floats), Unity's Matrix4x4 flat indexer expects a single flat array of
+					// 16 floats in column-major order (matrix[col][row]), matching glm's native
+					// column-major / OpenGL storage order.
+					auto flattenColumnMajor = [](const glm::mat4 & matrix) {
+						nlohmann::json jsonMatrix = nlohmann::json::array();
+						for (int col = 0; col < 4; col++) {
+							for (int row = 0; row < 4; row++) {
+								jsonMatrix.push_back(matrix[col][row]);
+							}
+						}
+						return jsonMatrix;
+					};
+
+					nlohmann::json json;
+					auto & jsonOpenGL = json["OpenGL"];
+					jsonOpenGL["viewMatrix"] = flattenColumnMajor(view.getViewMatrix());
+					jsonOpenGL["projectionMatrix"] = flattenColumnMajor(view.getClippedProjectionMatrix());
+
+					ofstream fileout(ofToDataPath(result.filePath), ios::out);
+					fileout << json.dump(4);
+					fileout.close();
 				}
 			}
 
