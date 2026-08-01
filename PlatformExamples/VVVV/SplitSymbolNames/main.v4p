@@ -7,7 +7,7 @@
    </BOUNDS>
    <BOUNDS type="Box" left="666" top="573" width="18780" height="1344">
    </BOUNDS>
-   <PIN pinname="Input String" slicecount="1" values="|Build started...&cr;&lf;1&gt;------ Build started: Project: Example, Configuration: Release x64 ------&cr;&lf;========== Build: 1 succeeded, 0 failed, 0 up-to-date, 0 skipped ==========&cr;&lf;|">
+   <PIN pinname="Input String" slicecount="1" values="|Build started...&cr;&lf;1&gt;------ Build started: Project: Example, Configuration: Release x64 ------&cr;&lf;1&gt;Example.vcxproj -&gt; bin\Example_Release.dll&cr;&lf;1&gt;Done building project &quot;Example.vcxproj&quot;.&cr;&lf;========== Build: 1 succeeded, 0 failed, 0 up-to-date, 0 skipped ==========&cr;&lf;|">
    </PIN>
    <PIN pinname="Output String" visible="1">
    </PIN>
